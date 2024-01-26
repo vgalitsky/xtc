@@ -3,9 +3,9 @@ declare(strict_types=1);
 
 namespace TMC\Cache;
 
-use Psr\SimpleCache\CacheInterface;
+//use Psr\SimpleCache\CacheInterface;
 
-class SimpleFsCache implements CacheInterface
+class SimpleFsCache //implements CacheInterface
 {
     protected string $path = '';
     protected string $ext = '.tmc.cache';
@@ -49,7 +49,7 @@ class SimpleFsCache implements CacheInterface
     public function clear(): bool
     {
         $fullCache = glob($this->path.DIRECTORY_SEPARATOR."*{$this->ext}", GLOB_ERR);
-        if (false === $fullCache) {       
+        if (false === $fullCache) {
             return false;
         }
         $success = true;

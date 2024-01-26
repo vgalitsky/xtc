@@ -1,10 +1,11 @@
 <?php
 declare(strict_types=1);
-namespace TMC\Cache;
 
-use Psr\SimpleCache\CacheInterface;
+namespace XTC\Cache;
 
-class NullCache implements CacheInterface
+//use Psr\SimpleCache\CacheInterface;
+
+class NullCache //implements CacheInterface
 {
      /**
       * Undocumented function
@@ -22,7 +23,7 @@ class NullCache implements CacheInterface
     }
 
     
-    public function set(string $key, mixed $value, null|int|\DateInterval $ttl = null): bool
+    public function set(string $key, mixed $value, int $ttl = null): bool
     {
         return true;
     }
@@ -53,7 +54,7 @@ class NullCache implements CacheInterface
     }
 
     
-    public function setMultiple(iterable $values, null|int|\DateInterval $ttl = null): bool
+    public function setMultiple(iterable $values, int $ttl = null): bool
     {
         return true;
     }
