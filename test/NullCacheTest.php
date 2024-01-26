@@ -1,5 +1,5 @@
 <?php
-use TMC\Cache\NullCache;
+use XTC\Cache\NullCache;
 
 use PHPUnit\Framework\TestCase;
 use Psr\SimpleCache\CacheInterface;

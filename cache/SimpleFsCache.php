@@ -1,7 +1,7 @@
 <?php
 declare(strict_types=1);
 
-namespace TMC\Cache;
+namespace XTC\Cache;
 
 //use Psr\SimpleCache\CacheInterface;
 

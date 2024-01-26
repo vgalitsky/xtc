@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-use TMC\Cache\SimpleFsCache;
+use XTC\Cache\SimpleFsCache;
 use PHPUnit\Framework\TestCase;
 
 /**
