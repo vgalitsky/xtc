@@ -25,7 +25,7 @@ class SimpleFsCache //implements CacheInterface
         return $this->path.DIRECTORY_SEPARATOR.$this->generateKey($key).$this->ext;
     }
 
-    public function get(string $key, mixed $default = null): mixed
+    public function get(string $key, $default = null)
     {
         if (!$this->has($key)) {
             return $default;
@@ -34,7 +34,7 @@ class SimpleFsCache //implements CacheInterface
     }
 
     
-    public function set(string $key, mixed $value, int $ttl = null): bool
+    public function set(string $key, $value, int $ttl = null): bool
     {
         return false === file_put_contents($this->getFilePath($key), serialize($value)) ? false : true;
     }
@@ -62,7 +62,7 @@ class SimpleFsCache //implements CacheInterface
     }
 
     
-    public function getMultiple(iterable $keys, mixed $default = null): iterable
+    public function getMultiple(iterable $keys, $default = null): iterable
     {
         $result = [];
         foreach ($keys as $key) {
