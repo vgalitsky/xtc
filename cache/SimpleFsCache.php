@@ -49,7 +49,7 @@ class SimpleFsCache extends SimpleCacheAbstract
     /**
      * {@inheritDoc}
      */
-    public function has(string $key): bool
+    public function has($key): bool
     {
         if (!$this->enabled) {
             return false;
@@ -62,7 +62,7 @@ class SimpleFsCache extends SimpleCacheAbstract
     /**
      * {@inheritDoc}
      */
-    public function get(string $key, $default = null)
+    public function get($key, $default = null)
     {
         if (!$this->has($key)) {
             return $default;
@@ -73,7 +73,7 @@ class SimpleFsCache extends SimpleCacheAbstract
     /**
      * {@inheritDoc}
      */
-    public function set(string $key, $value, int $ttl = null): bool
+    public function set($key, $value, $ttl = null): bool
     {
         if (!$this->enabled) {
             return false;
@@ -84,7 +84,7 @@ class SimpleFsCache extends SimpleCacheAbstract
     /**
      * {@inheritDoc}
      */
-    public function delete(string $key): bool
+    public function delete($key): bool
     {
         return unlink($this->getFilePath($key));
     }

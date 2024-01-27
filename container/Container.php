@@ -1,5 +1,6 @@
 <?php
 namespace XTC\Container;
+use XTC\Container\Exception\InvalidArgumentException;
 
 //use Psr\Container\ContainerInterface;
 
@@ -8,12 +9,25 @@ namespace XTC\Container;
  */
 class Container //implements ContainerInterface
 {
+
+    static protected bool $throwable = true;
     /**
      * The service container
      *
      * @var array
      */
-    static private array $container = [];
+    static protected array $container = [];
+
+    /**
+     * Undocumented function
+     *
+     * @param boolean $throwable
+     * @return void
+     */
+    static public function setThrowable(bool $throwable): void
+    {
+        static::$throwable = $throwable;
+    }
 
     /**
      * Register a service
@@ -53,7 +67,13 @@ class Container //implements ContainerInterface
      */
     static public function has(string $key): bool
     {
-        return array_key_exists($key, static::$container) ? true : false;
+        if (!array_key_exists($key, static::$container)) {
+            if (static::$throwable) {
+                throw new InvalidArgumentException(sprintf(_('Service "%s" does not exist.'), $key));
+            }
+            return false;
+        }
+        return true;
     }
 
 

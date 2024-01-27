@@ -3,7 +3,7 @@ declare(strict_types=1);
 
 namespace XTC\Cache;
 
-//use Psr\SimpleCache\CacheInterface;
+use Psr\SimpleCache\CacheInterface;
 
 
 /**
@@ -11,7 +11,7 @@ namespace XTC\Cache;
  *
  * @package XTC\Cache
  */
-abstract class SimpleCacheAbstract //implements CacheInterface
+abstract class SimpleCacheAbstract implements CacheInterface
 {
     /**
      * Indicates cache is enabled
@@ -53,7 +53,7 @@ abstract class SimpleCacheAbstract //implements CacheInterface
      * 
      * @return mixed The cached value or the default value if not found.
      */
-    abstract public function get(string $key, $default = null);
+    abstract public function get($key, $default = null);
 
     /**
      * Check if a key exists in the cache.
@@ -62,7 +62,7 @@ abstract class SimpleCacheAbstract //implements CacheInterface
      * 
      * @return bool True if the key exists, false otherwise.
      */
-    abstract public function has(string $key): bool;
+    abstract public function has($key): bool;
 
     /**
      * Set a value in the cache.
@@ -73,7 +73,7 @@ abstract class SimpleCacheAbstract //implements CacheInterface
      * 
      * @return bool True if the value was successfully set, false otherwise.
      */
-    abstract public function set(string $key, $value, int $ttl = null): bool;
+    abstract public function set($key, $value, $ttl = null): bool;
 
     /**
      * Delete a value from the cache by key.
@@ -82,7 +82,7 @@ abstract class SimpleCacheAbstract //implements CacheInterface
      * 
      * @return bool True if the value was successfully deleted, false otherwise.
      */
-    abstract public function delete(string $key): bool;
+    abstract public function delete($key): bool;
 
     /**
      * Clear the entire cache.
@@ -99,7 +99,7 @@ abstract class SimpleCacheAbstract //implements CacheInterface
      * 
      * @return iterable An iterable of cached values or default values for keys not found.
      */
-    public function getMultiple(iterable $keys, $default = null): iterable
+    public function getMultiple($keys, $default = null): iterable
     {
         foreach ($keys as $key) {
             yield $this->get($key, $default);
@@ -114,7 +114,7 @@ abstract class SimpleCacheAbstract //implements CacheInterface
      * 
      * @return bool True if all values were successfully set, false otherwise.
      */
-    public function setMultiple(iterable $values, int $ttl = null): bool
+    public function setMultiple($values, $ttl = null): bool
     {
         $success = true;
         foreach ($values as $key => $value) {
@@ -132,7 +132,7 @@ abstract class SimpleCacheAbstract //implements CacheInterface
      * 
      * @return bool True if all values were successfully deleted, false otherwise.
      */
-    public function deleteMultiple(iterable $keys): bool
+    public function deleteMultiple($keys): bool
     {
         $success = true;
         foreach ($keys as $key) {
