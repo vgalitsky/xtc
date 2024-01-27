@@ -14,8 +14,9 @@
     },
     "autoload": {
         "psr-4": {
+            "XTC\\Container\\": "container/",
             "XTC\\Cache\\": "cache/",
-            "XTC\\Container\\": "container/"
+            "XTC\\Debug\\": "debug/"
         }
     },
     "require-dev": {
