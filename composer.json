@@ -11,8 +11,10 @@
     ],
     "require": {
         "php": "^7.0 || ^7.2 || ^7.4",
+        "psr/container": "^2.0",
         "psr/simple-cache": "^1.0",
-        "psr/event-dispatcher": "^1.0"
+        "psr/event-dispatcher": "^1.0",
+        "psr/log": "^3.0"
 
     },
     "autoload": {
@@ -23,7 +25,8 @@
             "XTC\\Cache\\": "cache/",
             "XTC\\Debug\\": "debug/",
             "XTC\\Log\\": "log/",
-            "XTC\\EventDispatcher\\": "event-dispatcher/"
+            "XTC\\EventDispatcher\\": "event-dispatcher/",
+            "XTC\\Composer\\": "composer/"
         }
     },
     "require-dev": {

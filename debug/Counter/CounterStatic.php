@@ -1,14 +1,14 @@
 <?php
-namespace XTC\Debug;
+namespace XTC\Debug\Counter;
 
-class Counter
+class CounterStatic implements CounterInterface
 {
     /**
      * The counters container
      *
      * @var array
      */
-    protected static $counters = [];
+    protected static array $counters = [];
 
     /**
      * Increment a counter

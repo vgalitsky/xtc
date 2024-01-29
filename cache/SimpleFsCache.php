@@ -3,6 +3,7 @@ declare(strict_types=1);
 
 namespace XTC\Cache;
 
+use XTC\Config\ConfigInterface;
 
 class SimpleFsCache extends SimpleCacheAbstract
 {
@@ -20,11 +21,14 @@ class SimpleFsCache extends SimpleCacheAbstract
      */
     protected string $ext = '.tmc.cache';
 
+    protected ?ConfigInterface $config = null;
+
     /**
      * The constructor
      *
      * @param string $path The path for cache files storage
      */
+    
     public function __construct(string $path)
     {
         $this->path = $path;

@@ -1,125 +1,222 @@
 <?php
 namespace XTC\Container;
-use XTC\Container\Exception\InvalidArgumentException;
 
-//use Psr\Container\ContainerInterface;
+use XTC\Container\Exception\InvalidArgumentException;
+use XTC\Config\ConfigInterface;
+use XTC\Container\Exception\ContainerException;
+use XTC\Container\Exception\ServiceAlreadyRegisteredException;
+use XTC\Container\Exception\UnableToCreateServiceException;
 
 /**
  * PSR simple container
  */
-class Container //implements ContainerInterface
+class Container implements ContainerInterface
 {
-
-    static protected bool $throwable = true;
+    const CONFIG_PREFERENCE_PATH = 'preference';
     /**
-     * The service container
+     * @var ConfigInterface|null Config e.g. DI configuration
+     */
+    protected ?ConfigInterface $config = null;
+
+    /**
+     * @var boolean
+     */
+    protected bool $throwable = true;
+
+    /**
+     * @var array The service container
+     */
+    protected array $container = [];
+
+    /**
+     * @var Container|null Self singleton
+     */
+    static protected ?Container $instance = null;
+
+    /**
+     * Reserved ids for self instance
      *
      * @var array
      */
-    static protected array $container = [];
-
+    protected array $reserverdIds = [
+        \Psr\Container\ContainerInterface::class,
+        "ContainerInterface",
+        "Container",
+    ];
     /**
-     * Undocumented function
+     * The constructor
      *
-     * @param boolean $throwable
-     * @return void
+     * @param ConfigInterface $config The configuration
      */
-    static public function setThrowable(bool $throwable): void
+    public function __construct(ConfigInterface $config)
     {
-        static::$throwable = $throwable;
+        $this->config = $config;
+        static::$instance = $this;
+        
     }
 
     /**
-     * Register a service
+     * Container singgleton
      *
-     * @param string $key
-     * @param mixed $service
+     * @return ContainerInterface
+     */
+    static public function getInstance(): ContainerInterface
+    {
+        if (!static::$instance instanceof Container) {
+            throw new ContainerException(_('Container was not initialized'));
+        }
+        return static::$instance;
+    }
+
+    /**
+     * Set container can throw exceptions on not found service
+     * Or return NULL if service was not found
+     *
+     * @param boolean $throwable 
      * 
      * @return void
      */
-    static public function register(string $key, $service): void
+    public function setThrowable(bool $throwable): void
     {
-        static::$container[$key] = $service; 
+        $this->throwable = $throwable;
+    }
+
+
+    /**
+     * Sets the config
+     *
+     * @param ConfigInterface $config
+     * 
+     * @return void
+     */
+    public function setConfig(ConfigInterface $config): void
+    {
+        $this->config = $config;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public function register(string $key, $service): void
+    {
+        $this->container[$key] = $service; 
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public function create(string $id_or_class, ...$args): object
+    {
+        if ($this->has($id_or_class)) {
+            if (true === $this->throwable) {
+                throw new ServiceAlreadyRegisteredException(sprintf(_('Service "%s" already registered'), $id_or_class));
+            }
+        }
+        
+        $configPath = static::CONFIG_PREFERENCE_PATH. '.'.$id_or_class.'.class';
+        $preference = $this->config->get($configPath);
+        $preference = $preference ?? $id_or_class;
+       
+        /** @var object $service */
+        $service = $this->createServiceInstance($preference, ...$args);
+
+        return $service;
     }
     
     /**
      * Get the service
      *
-     * @param string $key
-     * @param mixed $default
+     * @param string $id              The service identifier
+     * @param bool   $create          Create service if needed
+     * @param bool   $registerCreated If true than register created service
+     * @param mixed  ...$args         Service Constructor arguments 
      * 
-     * @return void
+     * @return object|null
      */
-    static public function get(string $key, $default = null)
+    public function get(string $id, bool $create = false, bool $registerCreated = false,  ...$args): object
     {
-        if (static::has($key)) {
-            return static::$container[$key];
+        if (in_array($id, $this->reserverdIds)) {
+            return static::getInstance();
         }
-        return $default;
+
+        /**
+         * Return existing service instance
+         */
+        if ($this->has($id)) {
+            return $this->container[$id];
+        }
+        
+        /**
+         * If not found and can register than try to do
+         * 
+         * @throws UnableToCreateServiceException
+         */
+        if (true == $create) {
+            if (null !== $service = $this->create($id, ...$args)) {
+                if (true === $registerCreated) {
+                    $this->register($id, $service);
+                }
+                return $service;
+            }
+        }
+
+        /**
+         * Service not found
+         */
+        if (true === $this->throwable) {
+            throw new InvalidArgumentException(sprintf(_('Service "%s" not found'), $id));
+        }
+        
+        return null;
     }
 
     /**
      * Check a service is registered
      *
-     * @param string $key
+     * @param string $id Service identifier
      * 
      * @return boolean
      */
-    static public function has(string $key): bool
+    public function has(string $id): bool
     {
-        if (!array_key_exists($key, static::$container)) {
-            if (static::$throwable) {
-                throw new InvalidArgumentException(sprintf(_('Service "%s" does not exist.'), $key));
+        return array_key_exists($id, $this->container);
+    }
+
+    /**
+     * Cretae a service instance
+     *
+     * @param string $class 
+     * @param mixed  ...$args 
+     * 
+     * @return void
+     * @throws UnableToCreateServiceException
+     */
+    protected function createServiceInstance(string $class, ...$args): object
+    {
+        //@TODO:VG resolve
+        try {
+            //$factory = Factory::factory($class);
+            if (!class_exists($class)) {
+                throw new \Exception(sprintf(_('Class "%s" does not exists'), $class));
             }
-            return false;
+            return new $class(...$args);
+        } catch (\Throwable $e) {
+            throw new UnableToCreateServiceException(sprintf(_('Unable to create service "%s": %s'), $class, $e->getMessage()), $e->getCode(), $e);
         }
-        return true;
-    }
-
-
-    //--------------------------------------------------------------
-    public static function preAutoloadDump($event): void
-    {
-        return; //@TODO
-        $optimize = $event->getFlags()['optimize'] ?? false;
-        $rootPackage = $event->getComposer()->getPackage();
-
-        $dir = __DIR__ . '/../lib'; // for example
-
-        $autoloadDefinition = $rootPackage->getAutoload();
-        $optimize
-            ? self::writeStaticAutoloader($dir)
-            : self::writeDynamicAutoloader($dir);
-        $autoloadDefinition['files'][] = "$dir/autoload.php";
-        $rootPackage->setAutoload($autoloadDefinition);
     }
 
     /**
-     * Here we generate a relatively efficient file directly loading all
-     * the php files we want/found. glob() could be replaced with a better
-     * performing alternative or a recursive one.
+     * Reset the container instance
+     *
+     * @return void
      */
-    private static function writeStaticAutoloader($dir): void
+    public function reset()
     {
-        file_put_contents(
-            "$dir/autoload.php",
-            "<?php\n" . 
-                implode("\n", array_map(static function ($file) {
-                        return 'include_once(' . var_export($file, true) . ');';
-                    }, glob("$dir/*.php"))
-                )
-        );
-    }
+        $this->config = null;
 
-    /**
-     * Here we generate an always-up-to-date, but slightly slower version.
-     */
-    private static function writeDynamicAutoloader($dir): void
-    {
-        file_put_contents(
-            "$dir/autoload.php",
-            "<?php\n\nforeach (glob(__DIR__ . '/*.php') as \$file)\n 
-            include_once(\$file);"
-        );
+        //$this->throwable = true;
+
+        $this->container = [];
+        static::$instance = $this;;
     }
 }

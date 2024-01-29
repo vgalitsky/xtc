@@ -1,5 +1,6 @@
 <?php
 namespace XTC\Container\Exception;
 
-class ContainerException extends \Exception
+use Psr\Container\ContainerExceptionInterface;
+class ContainerException extends \Exception implements ContainerExceptionInterface
 {}
