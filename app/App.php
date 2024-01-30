@@ -10,6 +10,7 @@ use XTC\Container\ContainerInterface;
 use XTC\EventDispatcher\ListenerProviderInterface as XTCListenerProviderInterface;
 use XTC\App\Event\EventAppStart;
 use XTC\App\Exception\AppException;
+use XTC\Cache\NullCache;
 use XTC\Config\ConfigInterface;
 
 class App implements AppInterface
@@ -161,7 +162,11 @@ class App implements AppInterface
      */
     protected function initCache()
     {
-        $this->cache = $this->container->get(CacheInterface::class, self::getConfig('cache.path'));
+        if (self::getConfig('cache.enabled')) {
+            $this->cache = $this->container->get(CacheInterface::class,  self::getConfig('cache.path'));
+        } else {
+            $this->cache = new NullCache();
+        }
     }
 
     /**

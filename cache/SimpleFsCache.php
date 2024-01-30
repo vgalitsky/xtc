@@ -31,6 +31,7 @@ class SimpleFsCache extends SimpleCacheAbstract
     
     public function __construct(string $path)
     {
+        //@TODO:VG config dependency?
         $this->path = $path;
     }
      

@@ -3,9 +3,9 @@ declare(strict_types=1);
 
 namespace XTC\Cache;
 
-//use Psr\SimpleCache\CacheInterface;
+use Psr\SimpleCache\CacheInterface;
 
-class NullCache //implements CacheInterface
+class NullCache implements CacheInterface
 {
      /**
       * Undocumented function
@@ -14,7 +14,7 @@ class NullCache //implements CacheInterface
       * @param mixed $default
       * @return mixed
       */
-    public function get(string $key, mixed $default = null): mixed
+    public function get($key, $default = null)
     {
         if (!$this->has($key)) {
             return $default;
@@ -23,13 +23,13 @@ class NullCache //implements CacheInterface
     }
 
     
-    public function set(string $key, mixed $value, int $ttl = null): bool
+    public function set($key, $value,$ttl = null): bool
     {
         return true;
     }
 
     
-    public function delete(string $key): bool
+    public function delete($key): bool
     {
         return true;
     }
@@ -41,7 +41,7 @@ class NullCache //implements CacheInterface
     }
 
     
-    public function getMultiple(iterable $keys, mixed $default = null): iterable
+    public function getMultiple($keys, $default = null): iterable
     {
         $result = [];
         foreach ($keys as $key) {
@@ -54,19 +54,19 @@ class NullCache //implements CacheInterface
     }
 
     
-    public function setMultiple(iterable $values, int $ttl = null): bool
+    public function setMultiple($values, $ttl = null): bool
     {
         return true;
     }
 
     
-    public function deleteMultiple(iterable $keys): bool
+    public function deleteMultiple($keys): bool
     {
         return true;
     }
 
     
-    public function has(string $key): bool
+    public function has($key): bool
     {
         return false;
     }

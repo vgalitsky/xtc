@@ -11,7 +11,7 @@ interface DebuggerPoolInterface
      * 
      * @return DebuggerInterface
      */
-    public function create(string $id): DebuggerInterface;
+    public function createDebugger(string $id): DebuggerInterface;
 
     /**
      * Get the debugger from pool
@@ -21,7 +21,7 @@ interface DebuggerPoolInterface
      * 
      * @return DebuggerInterface
      */
-    public function get(string $id, bool $create = true): DebuggerInterface;
+    public function getDebugger(string $id, bool $create = true): DebuggerInterface;
 
     /**
      * Check if debugger exists
@@ -29,5 +29,5 @@ interface DebuggerPoolInterface
      * @param string $id
      * @return boolean
      */
-    public function has(string $id): bool;
+    public function hasDebugger(string $id): bool;
 }

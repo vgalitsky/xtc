@@ -63,7 +63,6 @@ class Container implements ContainerInterface
                 LoggerInterface::class,
                 Bootstrap::getBasePath('/log/xtc/container.log')
             );// ?? new NullLogger();
-        $this->logger->debug('Container initialized done');
     }
 
     /**

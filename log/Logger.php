@@ -11,8 +11,8 @@ class Logger extends AbstractLogger implements XTCLoggerInterface
     protected bool $throwable = true;
 
     //@TODO:VG
-    protected $logs = [];
-    protected $collectMessages = true;
+    protected array $logs = [];
+    protected bool $collectMessages = true;
 
     public function __construct(string $filename = '')
     {
@@ -41,6 +41,7 @@ class Logger extends AbstractLogger implements XTCLoggerInterface
             $fh = fopen($this->filename, 'a');
             fwrite($fh, '['. date('Y-m-d H:i:s'). '] '. strtoupper($level). ': '. $message. PHP_EOL);
             fclose($fh);
+
         } catch (\Throwable $e) {
             if (true === $this->throwable) {
                 throw $e;

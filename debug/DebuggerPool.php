@@ -32,7 +32,7 @@ class DebuggerPool implements  DebuggerPoolInterface
     /**
      * {@inheritDoc}
      */
-    public function create(string $id): DebuggerInterface
+    public function createDebugger(string $id): DebuggerInterface
     {
         $this->debuggers[$id] = $this->factory->create(DebuggerInterface::class, $id);
 
@@ -42,9 +42,9 @@ class DebuggerPool implements  DebuggerPoolInterface
     /**
      * {@inheritDoc}
      */
-    public function get(string $id, bool $create = true): DebuggerInterface
+    public function getDebugger(string $id, bool $create = true): DebuggerInterface
     {
-        if ($this->has($id)) {
+        if ($this->hasDebugger($id)) {
             return $this->debuggers[$id];
         }
 
@@ -57,7 +57,7 @@ class DebuggerPool implements  DebuggerPoolInterface
     /**
      * {@inheritDoc}
      */
-    public function has(string $id): bool
+    public function hasDEbugger(string $id): bool
     {
         return array_key_exists($id, $this->debuggers);
     }
@@ -77,6 +77,7 @@ class DebuggerPool implements  DebuggerPoolInterface
         $dump = $this->dump(true);
         echo "<pre>";
         print_r(unserialize($dump));
+        die('asdas');
     }
         
 }

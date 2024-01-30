@@ -24,14 +24,17 @@ trait AppDebugTrait
         $debugger = self::getDebugger('app');
         $debugger->getTimer()->start('app');
         $debugger->getCounter()->increment('app');
-        $debugger->getCounter()->increment('app');
-        $debugger->getLogger()->debug('APP DEBUGGER debug');
-        $debugger->getMessages()->push('APP MESSAGES debug');
-        $debugger->getTimer()->stop('app');
+        $debugger->getLogger()->debug('APP Logger test');
+        $debugger->getMessages()->push('APP Debug messages stack test');
+        //$debugger->getTimer()->stop('app');
 
         register_shutdown_function(
             function () {
-                echo self::getDebugger('app')->dump();
+                if (self::getConfig('app.debug.enabled')) {
+                    self::getDebugger('app')->getLogger()->debug(
+                        print_r(unserialize(self::getDebugger('app')->dump()), true)
+                    );
+                }
             }
         );
     }
@@ -44,7 +47,7 @@ trait AppDebugTrait
      */
     static public function getDebugger(string $id ): DebuggerInterface
     {
-        return self::getInstance()->debuggerPool->get($id);
+        return self::getInstance()->debuggerPool->getDebugger($id);
     }
 
     /**
@@ -56,7 +59,7 @@ trait AppDebugTrait
      */
     static function createDebugger(string $id): DebuggerInterface
     {
-        return self::getInstance()->debuggerPool->create($id);
+        return self::getInstance()->debuggerPool->createDebugger($id);
     }
     /**
      * Get the debugger pool instance
