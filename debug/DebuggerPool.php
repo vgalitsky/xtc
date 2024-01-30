@@ -24,7 +24,7 @@ class DebuggerPool implements  DebuggerPoolInterface
     // {
     //     $this->container = $container;
     // }
-    public function __construct(FactoryInterface $factory) 
+    public function __construct(\XTC\Debug\DebuggerFactory $factory) 
     {
         $this->factory = $factory;
     }

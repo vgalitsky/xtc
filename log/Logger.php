@@ -4,7 +4,7 @@ namespace XTC\Log;
 
 use Psr\Log\AbstractLogger;
 
-class Logger extends AbstractLogger
+class Logger extends AbstractLogger implements XTCLoggerInterface
 {
     protected string $filename = '';
 
@@ -33,6 +33,11 @@ class Logger extends AbstractLogger
         }
 
         try {
+
+            if (!is_dir(dirname($this->filename))) {
+                mkdir(dirname($this->filename), 0777, true);
+            }
+
             $fh = fopen($this->filename, 'a');
             fwrite($fh, '['. date('Y-m-d H:i:s'). '] '. strtoupper($level). ': '. $message. PHP_EOL);
             fclose($fh);

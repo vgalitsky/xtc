@@ -5,18 +5,41 @@ use XTC\App\Exception\BootstrapException;
 use XTC\Config\Config;
 use XTC\Config\ConfigInterface;
 use XTC\Container\ContainerInterface;
+use XTC\Container\FactoryInterface;
 
 class Bootstrap implements BootstrapInterface
 {
 
+    const CONFIG_PATH_BASE_PATH = 'bootstrap.path.base';
+    const CONFIG_PATH_CONFIG_CLASS = 'bootstrap.config.class';
+    const CONFIG_PATH_CONFIG_FILES = 'bootstrap.config.files';
+    const CONFIG_PATH_CONFIG_IGNORE_ERRORS = 'bootstrap.config.ignore-errors';
+    const CONFIG_PATH_CONTAINER_CLASS = 'bootstrap.container.class';
+    const CONFIG_PATH_CONTAINER_CONFIG_PATH = 'bootstrap.container.config-path';
+    const CONFIG_PATH_FACTORY_CLASS = 'bootstrap.factory.class';
+    const CONFIG_PATH_APP_CLASS = 'bootstrap.app.class';
+    const CONFIG_PATH_APP_CONFIG_PATH = 'bootstrap.app.config-path';
 
+    /**
+     * The App instance
+     *
+     * @var AppInterface|null
+     */
     protected ?AppInterface $app = null;
+
     /**
      * The service container instance
      *
      * @var ContainerInterface
      */
     protected ?ContainerInterface $container = null;
+
+    /**
+     * The factory instance
+     *
+     * @var FactoryInterface|null
+     */
+    protected ?FactoryInterface $factory = null;
     
     /**
      * Self singleton
@@ -81,18 +104,43 @@ class Bootstrap implements BootstrapInterface
     /**
      * @return object
      */
-    public static function app(): App
+    public static function getApp(): App
     {
         $bootstrap = self::getInstance();
         return $bootstrap->app;
     }
 
     /**
+     * @param string|null $path The relative path to convert to absolute
      * @return string
      */
-    public static function getBasePath(): string
+    public static function getBasePath(string $path = null): string
     {
-        return self::getInstance()->config->get('bootstrap.path.base');
+        $basePath = rtrim(
+            self::getInstance()
+                ->config
+                ->get(self::CONFIG_PATH_BASE_PATH), '/'
+        );
+        if (null !== $path) {
+            $basePath .=  '/'. ltrim($path, '/');
+        }
+        return $basePath;
+    }
+    
+    /**
+     * @return ContainerInterface
+     */
+    public static function getContainer(): ContainerInterface
+    {
+        return self::getInstance()->container;
+    }
+    
+    /**
+     * @return FactoryInterface
+     */
+    public static function getFactory(): FactoryInterface
+    {
+        return self::getInstance()->factory;
     }
 
     /**
@@ -106,24 +154,24 @@ class Bootstrap implements BootstrapInterface
     }
 
     /**
+     * Init configuration
+     * Check "bootstrap.config.files" path in bootstrap.json 
+     *  for the files list
+     * 
      * @return void
+     * 
+     * @throws BootstrapException
      */
-    protected function initConfig()
+    protected function initConfig(): void
     {
-        //@TOTO:VG
-        $a = new class {
-            public $a = 1;
-        };
-//-------------------------------------------------------------------
-        
-
-        $configClass = $this->config->get('bootstrap.config.class');
+        $configClass = $this->config->get(self::CONFIG_PATH_CONFIG_CLASS);
 
         if (!class_exists($configClass)) {
             throw new BootstrapException(sprintf(_('Config class "%s" does not exist'), $configClass));
         }
 
-        $files = $this->config->get('bootstrap.config.files');
+        $files = $this->config->get(self::CONFIG_PATH_CONFIG_FILES);
+
         if (!is_array($files)) {
             throw new BootstrapException(sprintf(_('Can not find config files entry in bootstrap configuration. node "bootstrap.config.files". Please check the "bootstrap.json" file')));
         }
@@ -137,12 +185,16 @@ class Bootstrap implements BootstrapInterface
                 $fileArray = json_decode(@file_get_contents(XTC_BASE_PATH . $file), true, 512, JSON_THROW_ON_ERROR);
             
             } catch (\Throwable $e) {
-                if (!$this->config->get('bootstrap.config.ignore-errors')) {
+                if (!$this->config->get(self::CONFIG_PATH_CONFIG_IGNORE_ERRORS)) {
                     throw new BootstrapException(sprintf(_('JSON is not valid in the file "%s" or file does not exists'), XTC_BASE_PATH . $file));
                 }
             }
 
-            $configArray = array_merge_recursive(
+            /**
+             * Merge the configurations recursively
+             * Last loaded configuration will replace existing entires
+             */
+            $configArray = array_replace_recursive(
                 $configArray,
                 $fileArray
             );
@@ -155,15 +207,21 @@ class Bootstrap implements BootstrapInterface
      *
      * @return void
      */
-    protected function initContainer()
+    protected function initContainer(): void
     {
-        $containerClass = $this->config->get('bootstrap.container.class');
+        $containerClass = $this->config->get(self::CONFIG_PATH_CONTAINER_CLASS);
         $this->container = new $containerClass(
             $this->config->get(
-                $this->config->get('bootstrap.container.config-path'),
+                $this->config->get(self::CONFIG_PATH_CONTAINER_CONFIG_PATH),
                 true
             )
         );
+
+        /**
+         * Init factory as well
+         */
+        $factoryClass = $this->config->get(self::CONFIG_PATH_FACTORY_CLASS);
+        $this->factory = new $factoryClass($this->container);
     }
 
     /**
@@ -171,16 +229,17 @@ class Bootstrap implements BootstrapInterface
      *
      * @return void
      */
-    protected function initApp()
+    protected function initApp(): void
     {
-        $appClass = $this->config->get('bootstrap.app.class');
+        $appClass = $this->config->get(self::CONFIG_PATH_APP_CLASS);
         $this->app = new $appClass(
             $this,
             $this->config->get(
-                $this->config->get('bootstrap.app.config-path'),
+                $this->config->get(self::CONFIG_PATH_APP_CONFIG_PATH),
                 true
             ),
-            $this->container
+            $this->container,
+            $this->factory
         );
     }
 

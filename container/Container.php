@@ -3,11 +3,13 @@ namespace XTC\Container;
 
 use Psr\Log\LoggerInterface;
 use Psr\Log\NullLogger;
+use XTC\App\Bootstrap;
 use XTC\Container\Exception\InvalidArgumentException;
 use XTC\Config\ConfigInterface;
 use XTC\Container\Exception\ContainerException;
 use XTC\Container\Exception\ServiceAlreadyRegisteredException;
 use XTC\Container\Exception\UnableToCreateServiceException;
+use XTC\Container\Preference\Preference;
 use XTC\Debug\DebuggerInterface;
 
 /**
@@ -52,13 +54,16 @@ class Container implements ContainerInterface
      *
      * @param ConfigInterface $config The configuration
      */
-    public function __construct(ConfigInterface $config, LoggerInterface $logger = null)
+    public function __construct(ConfigInterface $config)
     {
         $this->config = $config;
-        $this->logger = $logger ?? new NullLogger();
-
         static::$instance = $this;
-        
+        $this->logger = $this->get("LoggerFactory")
+            ->create(
+                LoggerInterface::class,
+                Bootstrap::getBasePath('/log/xtc/container.log')
+            );// ?? new NullLogger();
+        $this->logger->debug('Container initialized done');
     }
 
     /**
@@ -93,84 +98,19 @@ class Container implements ContainerInterface
     {
         $this->container[$key] = $service; 
     }
+    
+     /**
+     * {@inheritDoc}
+     */
+    public function has(string $id): bool
+    {
+        return array_key_exists($id, $this->container);
+    }
 
     /**
      * {@inheritDoc}
      */
-    public function create(string $id_or_class, ...$args): object
-    {
-        if ($this->has($id_or_class)) {
-                throw new ServiceAlreadyRegisteredException(sprintf(_('The service "%s" was already registered'), $id_or_class));
-        }
-        
-        /**
-         * @var string $preference
-         */
-        $preference = $this->resolvePreference($id_or_class);
-
-        if (!class_exists($preference)) {
-            throw new \Exception(sprintf(_('Class "%s" does not exists'), $preference));
-        }
-
-        if (null === $reflection = new \ReflectionClass($preference)) {
-            throw new InvalidArgumentException(sprintf(_('Unable to get a reflection for the class "%s"'), $id_or_class));
-        }
-
-        /**
-         * @var ReflectionMethod|null $constructor
-         */
-        $constructor = $reflection->getConstructor();
-
-        if (null === $constructor) {
-            try {
-                return $reflection->newInstanceWithoutConstructor();
-            } catch (\ReflectionException $e) {
-                throw new InvalidArgumentException(sprintf(_('Unable to create an instance for the class "%s"'), $id_or_class), $e->getCode(), $e);
-            }
-        }
-
-        /**
-         * @var \ReflectionParameter[] $parameters
-         */
-        $parameters = $constructor->getParameters();
-
-        if (empty($parameters)) {
-            try {
-                $service =  $reflection->newInstanceWithoutConstructor();
-            } catch (\ReflectionException $e) {
-                throw new InvalidArgumentException(sprintf(_('Unable to create an instance for the class "%s" using constructor'), $id_or_class), $e->getCode(), $e);
-            }
-        }
-
-        /**
-         * Resolver service agruments
-         */
-        $arguments = $this->resolveArguments($parameters);
-        
-        /**
-         * Add arguments passed via create method call 
-         * Meaning these arguments came outside the container
-         * And no need to be resolved
-         */
-        array_push($arguments, ...$args);
-
-        /** @var object $service */
-        $service = $this->createServiceInstance($preference, ...$arguments);
-
-        return $service;
-    }
-    
-    /**
-     * Get the service
-     *
-     * @param string $id              The service identifier
-     * @param bool   $create          Create service if needed
-     * @param bool   $registerCreated If true than register created service
-     * @param mixed  ...$args         Service Constructor arguments 
-     * 
-     * @return object|null
-     */
-    public function get(string $id, bool $create = false, bool $registerCreated = false,  ...$args): object
+    public function get(string $id, ...$args): object
     {
         if (in_array($id, $this->reserverdIds)) {
             return static::getInstance();
@@ -184,17 +124,12 @@ class Container implements ContainerInterface
         }
         
         /**
-         * If not found and can register than try to do
+         * If not found than create
          * 
          * @throws UnableToCreateServiceException
          */
-        if (true == $create) {
-            if (null !== $service = $this->create($id, ...$args)) {
-                if (true === $registerCreated) {
-                    $this->register($id, $service);
-                }
-                return $service;
-            }
+        if (null !== $service = $this->create($id, ...$args)) {
+            return $service;
         }
 
         /**
@@ -206,15 +141,70 @@ class Container implements ContainerInterface
     }
 
     /**
-     * Check a service is registered
-     *
-     * @param string $id Service identifier
-     * 
-     * @return boolean
+     * {@inheritDoc}
      */
-    public function has(string $id): bool
+    public function create(string $id_or_class, ...$args): object
     {
-        return array_key_exists($id, $this->container);
+        /**
+         * @var Preference $preference
+         */
+        $preference = $this->resolvePreference($id_or_class);
+
+        if (null === $preference->getClass() || !class_exists($preference->getClass())) {
+            throw new \Exception(sprintf(_('Class "%s" does not exists'), $preference->getClass()));
+        }
+
+        if (null === $reflection = new \ReflectionClass($preference->getClass())) {
+            throw new InvalidArgumentException(sprintf(_('Unable to get a reflection for the class "%s"'), $id_or_class));
+        }
+
+        /**
+         * @var \ReflectionMethod|null $constructor
+         */
+        $constructor = $reflection->getConstructor();
+
+        if (null === $constructor) {
+            try {
+                $service = $reflection->newInstanceWithoutConstructor();
+            } catch (\ReflectionException $e) {
+                throw new InvalidArgumentException(sprintf(_('Unable to create an instance for the class "%s"'), $id_or_class), $e->getCode(), $e);
+            }
+        } else {
+
+            /**
+             * @var \ReflectionParameter[] $reflectionParameters
+             */
+            $reflectionParameters = $constructor->getParameters();
+
+            if (empty($reflectionParameters)) {
+                try {
+                    /**
+                     * Simple create instance
+                     */
+                    $service =  $reflection->newInstanceWithoutConstructor();
+
+                } catch (\ReflectionException $e) {
+                    throw new InvalidArgumentException(sprintf(_('Unable to create an instance for the class "%s" using constructor'), $id_or_class), $e->getCode(), $e);
+                }
+            }
+
+            /**
+             * Resolver service agruments
+             * @TODO:VG merge arguments from Preference configuration
+             */
+            $arguments = $this->resolveArguments($reflectionParameters, ...$args);
+
+            /**
+             * Finally create the new service instance
+             */
+            $service = $reflection->newInstance(...$arguments);
+        }
+
+        //$service = $this->createServiceInstance($preference->getClass(), ...$arguments);
+
+        $this->lifeCycle($preference, $service);
+
+        return $service;
     }
 
     /**
@@ -222,62 +212,70 @@ class Container implements ContainerInterface
      *
      * @param string $id
      * 
-     * @return string
+     * @return Preference
      */
-    protected function resolvePreference(string $id): string
+    protected function resolvePreference(string $id): Preference
     {
-        /**
-         * @var string $preference
-         */
-        $preferenceId = $this->config->get('preference.' . $id . '.id');
-        if (null !== $preferenceId) {
-            return $this->resolvePreference($preferenceId);
-        }
-        
-        /**
-         * @var string $preference
-         */
-        $preference = $this->config->get('preference.' . $id . '.class');
+        $preferenceData = $this->config->get(
+            static::CONFIG_PREFERENCE_PATH . '.' . $id
+        );
 
-        return  (null !== $preference) ? $preference : $id;
+        /**
+         * Set the preference class to passed $id if preference config does not exists
+         */
+        $preferenceData = is_array($preferenceData) ? $preferenceData : ['class'=>$id];
+
+        /**
+         * @var Preference $preference
+         */
+        $preference = new Preference($id, $preferenceData);
+
+        
+        if (null !== $preference->getReference()) {
+            $referrer = $preference;
+            //@TODO:VG compile???
+            $preference = $this->resolvePreference($preference->getReference());
+            $preference->setReferrer($referrer);
+        }
+
+        return  $preference;
     }
 
     /**
      * Resolve the arguments
      *
-     * @param \ReflectionParameter[] $arguments
+     * @param \ReflectionParameter[] $parameters The reflection parameters
+     * @param mixed                  ...$args The serviece arguments
      * 
-     * @return object[]
+     * @return mixed[]
      */
-    protected function resolveArguments(array $arguments): array
+    protected function resolveArguments(array $parameters, ...$args): array
     {
-        $args = [];
+        $arguments = [];
         /**
          * @var \ReflectionParameter $argument
          */
-        foreach ($arguments as $argument) {
+        foreach ($parameters as $argument) {
             $typeName = $argument->getType()->getName();
 
             //@TODO:VG enough???
             $is_scalar = function_exists('is_' . $typeName);
 
             if (!$is_scalar) {
-                $args[] = $this->get($typeName, true);
+                $arguments[] = $this->get($typeName);
+            } else {
+                //@TODO:VG check native args???
             }
         }
-        return $args;
-    }
 
-    /**
-     * Reset the container instance
-     *
-     * @return void
-     */
-    public function reset()
-    {
-        $this->config = null;
-        $this->container = [];
-        static::$instance = $this;;
+        /**
+         * Add arguments passed via create method call 
+         * Meaning these arguments came outside the container
+         * And no need to be resolved
+         */
+        array_push($arguments, ...$args);
+
+        return $arguments;
     }
 
     /**
@@ -300,5 +298,41 @@ class Container implements ContainerInterface
             throw new InvalidArgumentException(sprintf(_('Unable to create service "%s": %s'), $class, $e->getMessage()), $e->getCode(), $e);
         }
     }
+
+    protected function lifeCycle(Preference $preference, object $service)
+    {
+        /**
+         * Check referres
+         */
+        $finalClass = $preference->getClass();
+        while ($preference->hasReferrer()) {
+            $preference = $preference->getReferrer();
+        }
+
+        /**
+         * Make the class alias
+         */
+        if ($finalClass !== $preference->getClass()) {
+            class_alias($finalClass, $preference->uid());
+        }
+
+        /**
+         * If singleton
+         */
+        if ($preference->isSingleton()) {
+            $this->register($preference->uid(), $service);
+        }
+    }
     
+    /**
+     * Reset the container instance
+     *
+     * @return void
+     */
+    public function reset()
+    {
+        $this->config = null;
+        $this->container = [];
+        static::$instance = $this;;
+    }
 }

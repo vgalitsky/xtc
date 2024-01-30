@@ -1,17 +1,16 @@
 <?php
 namespace XTC\App;
 
-use PharIo\Manifest\Application;
-use XTC\Container\ContainerInterface;
-//use Psr\Container\ContainerInterface as PsrContainerInterface;
+
+use Psr\Log\LoggerInterface;
+use Psr\SimpleCache\CacheInterface;
 use Psr\EventDispatcher\EventDispatcherInterface;
 use Psr\EventDispatcher\ListenerProviderInterface;
-use Psr\Log\LoggerInterface;
+use XTC\Container\ContainerInterface;
+use XTC\EventDispatcher\ListenerProviderInterface as XTCListenerProviderInterface;
 use XTC\App\Event\EventAppStart;
 use XTC\App\Exception\AppException;
 use XTC\Config\ConfigInterface;
-use XTC\Debug\Debug;
-use XTC\Debug\DebuggerInterface;
 
 class App implements AppInterface
 {
@@ -29,19 +28,24 @@ class App implements AppInterface
     protected ?ConfigInterface $config = null;
 
     /** 
-     * @var ListenerProviderInterface $listenerProvider The listener provider 
+     * @var XTCListenerProviderInterface The listener provider 
     */
-    protected ?ListenerProviderInterface $listenerProvider = null;
+    protected ?XTCListenerProviderInterface $listenerProvider = null;
 
     /** 
-     * @var EventDispatcherInterface $eventDispatcher The event dispatcher 
+     * @var EventDispatcherInterface The event dispatcher 
     */
     protected ?EventDispatcherInterface $eventDispatcher = null;
 
     /**
      * @var LoggerInterface|null The logger
      */
-    protected ?LoggerInterface $logger;
+    protected ?LoggerInterface $logger = null;
+    
+    /**
+     * @var CacheInterface|null The cache
+     */
+    protected ?CacheInterface $cache = null;
 
     /**
      * @var Bootstrap|null
@@ -59,8 +63,8 @@ class App implements AppInterface
      * The constructor
      *
      * @param BootstrapInterface $bootstrap The bootstrap
-     * @param ContainerInterface $container The container
      * @param ConfigInterface    $config    The configuration
+     * @param ContainerInterface $container The container
      * 
      */
     public function __construct(
@@ -74,9 +78,8 @@ class App implements AppInterface
         $this->bootstrap = $bootstrap;
         $this->container = $container;
         $this->config = $config;
-
+       
         $this->init();
-
     }
 
     /**
@@ -107,9 +110,12 @@ class App implements AppInterface
     public function init(): void
     {
         $this->initLogger();
+        $this->initCache();
         $this->initEventDispatcher();
         
-        $this->initDebug();
+        if (self::getConfig('app.debug.enabled')) {
+            $this->initDebug();
+        }
 
         $this->assert();
     }
@@ -137,12 +143,25 @@ class App implements AppInterface
             if (!$this->config instanceof ConfigInterface) {
                 throw new AppException(_('Failed assert the Config'));
             }
+            
+            if (!$this->cache instanceof CacheInterface) {
+                throw new AppException(_('Failed assert the Cache'));
+            }
           
         } catch (AppException $e) {
             if (true === self::getConfig('app.debug.enabled')) {
                 
             }
         }
+    }
+
+    /**
+     * The cache 
+     * @return void
+     */
+    protected function initCache()
+    {
+        $this->cache = $this->container->get(CacheInterface::class, self::getConfig('cache.path'));
     }
 
     /**
@@ -162,17 +181,17 @@ class App implements AppInterface
     {
        
         $this->listenerProvider = $this->container
-            ->get(ListenerProviderInterface::class, true, true);
+            ->get(ListenerProviderInterface::class);
         
         $this->eventDispatcher = $this->container
-            ->get(EventDispatcherInterface::class, true, true, $this->listenerProvider);
+            ->get(EventDispatcherInterface::class, $this->listenerProvider);
 
         /****************************************
          * Dispatch very first event
          * 
          * Create a test event
          */
-        $event = $this->container->get(EventAppStart::class, true, true, ['message'=>'App init event dispatcher done']);
+        $event = $this->container->get(EventAppStart::class, ['message'=>'App init event dispatcher done']);
 
         /**
          * Attach it to the listener provider
@@ -189,8 +208,6 @@ class App implements AppInterface
          ****************************************/
     }
 
-    
-
     /**
      * Get the config instance
      *
@@ -203,13 +220,27 @@ class App implements AppInterface
 
 
     /**
-     * @return void
+     * @param string|null $path
+     * 
+     * @return string
      */
-    static public function getBasePath()
+    static public function getBasePath(string $path = null): string
     {
-        return self::getInstance()->bootstrap->getBasePath();
+        return self::getInstance()->bootstrap->getBasePath($path);
     }
 
+    /**
+     * Get the cache
+     *
+     * @return CacheInterface
+     */
+    static public function getCache(): CacheInterface
+    {
+        return self::getInstance()->cache;
+    }
+
+
+//-Test events---------------------------------------------------
     /**
      * The event listener method
      *

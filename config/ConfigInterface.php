@@ -11,4 +11,11 @@ interface ConfigInterface
      * @return mixed|array|object
      */
     function get(string $path);
+
+    /**
+     * Get the all config data
+     *
+     * @return void
+     */
+    function all();
 }

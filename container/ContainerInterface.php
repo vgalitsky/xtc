@@ -14,13 +14,11 @@ interface ContainerInterface extends PsrContainerInterface
      * {@inheritDoc}
      *
      * @param string $id              The id of the service
-     * @param bool   $create          Whether to create
-     * @param bool   $registerCreated Whether to register
-     * @param mixed  ...$args         Service constructor arguments
+     * @param mixed  ...$args         Optional service constructor arguments
      * 
      * @return object The service instance
      */
-    public function get(string $id, bool $create = false, bool $registerCreated = false,  ...$args): object;
+    public function get(string $id, ...$args): object;
     
     
     /**

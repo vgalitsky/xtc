@@ -60,8 +60,12 @@ class Debugger implements DebuggerInterface
         $this->timer = $timer;
         $this->logger = $loggerFactory->create(
             LoggerInterface::class,
-            Bootstrap::getBasePath() . '/log/' . 'debugger-' . $id . '.log'
+            Bootstrap::getBasePath('/xtc/log/debugger/' . $id . '.log')
         );
+
+        // register_shutdown_function(
+        //     function () {}
+        // );
     }
 
     /**

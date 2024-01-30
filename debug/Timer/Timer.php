@@ -9,6 +9,15 @@ class Timer implements TimerInterface
      */
     protected array $timers = [];
 
+    public function __construct()
+    {
+        register_shutdown_function(
+            function () {
+                $this->stopAll();
+            }
+        );
+    }
+
     /**
      * Start a timer
      *
@@ -38,6 +47,18 @@ class Timer implements TimerInterface
         $this->timers[$timer]['duration'] = $this->timers[$timer]['stop'] - $this->timers[$timer]['start'];
 
         return $this->timers[$timer]['duration'];
+    }
+
+    /**
+     * Stop all timers
+     *
+     * @return void
+     */
+    public function stopAll()
+    {
+        foreach ($this->timers as $timer => $tmp) {
+            $this->stop($timer);
+        }
     }
 
     /**

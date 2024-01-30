@@ -17,16 +17,7 @@ trait AppDebugTrait
     public function initDebug(): void
     {
         $debuggerPool = $this->debuggerPool = $this->container->get(
-            DebuggerPoolInterface::class,
-            true,
-            true
-        );
-        
-        register_shutdown_function(
-            function () use ($debuggerPool) {
-                echo "<pre>aaaaaaaaaaaaaaaaaaaaaaaaaaa";
-                print_r(unserialize($debuggerPool->dump()));
-            }
+            DebuggerPoolInterface::class
         );
         
         self::createDebugger('app');
@@ -37,20 +28,22 @@ trait AppDebugTrait
         $debugger->getLogger()->debug('APP DEBUGGER debug');
         $debugger->getMessages()->push('APP MESSAGES debug');
         $debugger->getTimer()->stop('app');
-die('deaergsdthsdfghsfg');
+
+        register_shutdown_function(
+            function () {
+                echo self::getDebugger('app')->dump();
+            }
+        );
     }
 
     /**
      * Get the debugger instance
+     * @param string $id The debugger identifier
      *
      * @return DebuggerInterface|DebuggerPoolInterface
      */
-    static public function getDebugger(?string $id = null): DebuggerInterface
+    static public function getDebugger(string $id ): DebuggerInterface
     {
-        if (null === $id) {
-            return self::getInstance()->debuggerPool;
-        }
-
         return self::getInstance()->debuggerPool->get($id);
     }
 
@@ -64,5 +57,14 @@ die('deaergsdthsdfghsfg');
     static function createDebugger(string $id): DebuggerInterface
     {
         return self::getInstance()->debuggerPool->create($id);
+    }
+    /**
+     * Get the debugger pool instance
+     *
+     * @return DebuggerPoolInterface
+     */
+    static public function getDebuggerPool(): DebuggerPoolInterface
+    {
+        return self::getInstance()->debuggerPool;
     }
 }
