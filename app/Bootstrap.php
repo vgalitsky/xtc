@@ -8,6 +8,8 @@ use XTC\Container\ContainerInterface;
 
 class Bootstrap implements BootstrapInterface
 {
+
+
     protected ?AppInterface $app = null;
     /**
      * The service container instance
@@ -60,7 +62,7 @@ class Bootstrap implements BootstrapInterface
 
         $this->config = new Config($config);
 
-        static::$instance = $this;
+        self::$instance = $this;
 
         $this->init();
     }
@@ -70,10 +72,10 @@ class Bootstrap implements BootstrapInterface
      */
     static public function getInstance(): BootstrapInterface
     {
-        if (!static::$instance instanceof BootstrapInterface) {
+        if (!self::$instance instanceof BootstrapInterface) {
             throw new \Exception(_('Bootstrap was not initialized'));
         }
-        return static::$instance;
+        return self::$instance;
     }
 
     /**
@@ -81,7 +83,7 @@ class Bootstrap implements BootstrapInterface
      */
     public static function app(): App
     {
-        $bootstrap = static::getInstance();
+        $bootstrap = self::getInstance();
         return $bootstrap->app;
     }
 
@@ -90,7 +92,7 @@ class Bootstrap implements BootstrapInterface
      */
     public static function getBasePath(): string
     {
-        return self::getInstance()->config->get('boostrap.path.base');
+        return self::getInstance()->config->get('bootstrap.path.base');
     }
 
     /**

@@ -10,6 +10,10 @@ class Logger extends AbstractLogger
 
     protected bool $throwable = true;
 
+    //@TODO:VG
+    protected $logs = [];
+    protected $collectMessages = true;
+
     public function __construct(string $filename = '')
     {
         $this->filename = $filename ?? 'simple-log.log';
@@ -23,6 +27,11 @@ class Logger extends AbstractLogger
     public function log($level, $message, array $context = [])
     {
         $message = $this->interpolateMessage($message, $context);
+
+        if (false !== $this->collectMessages) {
+            $this->logs[] = $message;
+        }
+
         try {
             $fh = fopen($this->filename, 'a');
             fwrite($fh, '['. date('Y-m-d H:i:s'). '] '. strtoupper($level). ': '. $message. PHP_EOL);
@@ -64,4 +73,13 @@ class Logger extends AbstractLogger
         $this->throwable = $throwable;
     }
     
+    /**
+     * Dump messages
+     *
+     * @return string
+     */
+    public function dump(): string
+    {
+        return serialize($this->logs);
+    }
 }

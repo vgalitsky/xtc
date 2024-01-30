@@ -37,7 +37,7 @@ class Config implements ConfigInterface
      */
     public function get(string $path, bool $subNodeAsInstance = false)
     {
-        $node = $this->pathGet($path);
+        $node = $this->pathGet($path, false);
         if (is_array($node) && $subNodeAsInstance) {
             return new static($node);
         }

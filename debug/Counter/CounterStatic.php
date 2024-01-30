@@ -1,7 +1,7 @@
 <?php
 namespace XTC\Debug\Counter;
 
-class CounterStatic implements CounterInterface
+class CounterStatic //implements CounterInterface
 {
     /**
      * The counters container
@@ -11,11 +11,7 @@ class CounterStatic implements CounterInterface
     protected static array $counters = [];
 
     /**
-     * Increment a counter
-     *
-     * @param string $name Counter name
-     * 
-     * @return void
+     * {@inheritDoc}
      */
     public static function increment(string $name): void
     {
@@ -27,11 +23,7 @@ class CounterStatic implements CounterInterface
     }
 
     /**
-     * Decrement a counter
-     *
-     * @param string $name The counter name
-     * 
-     * @return void
+     * {@inheritDoc}
      */
     public static function decrement(string $name): void
     {
@@ -43,11 +35,7 @@ class CounterStatic implements CounterInterface
     }
 
     /**
-     * Get the counter value
-     *
-     * @param string $name The counter name
-     * 
-     * @return integer
+     * {@inheritDoc}
      */
     public static function get(string $name): int
     {

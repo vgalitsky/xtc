@@ -11,10 +11,12 @@ use XTC\App\Event\EventAppStart;
 use XTC\App\Exception\AppException;
 use XTC\Config\ConfigInterface;
 use XTC\Debug\Debug;
+use XTC\Debug\DebuggerInterface;
 
 class App implements AppInterface
 {
     use AppTrait;
+    use AppDebugTrait;
 
     /**
      * @var ContainerInterface|null The PSR Container
@@ -88,6 +90,16 @@ class App implements AppInterface
     }
 
     /**
+     * Get Bootstrap instance
+     *
+     * @return void
+     */
+    static public function getBootstrap(): Bootstrap
+    {
+        return self::getInstance()->bootstrap;
+    }
+
+    /**
      * Init the application
      *
      * @return void
@@ -96,6 +108,8 @@ class App implements AppInterface
     {
         $this->initLogger();
         $this->initEventDispatcher();
+        
+        $this->initDebug();
 
         $this->assert();
     }
@@ -116,16 +130,17 @@ class App implements AppInterface
                 throw new AppException(_('Failed assert the Event Dispatcher'));
             }
 
-            if (!$this->eventDispatcher instanceof ListenerProviderInterface) {
-                throw new AppException(_('Failed assert the config'));
+            if (!$this->listenerProvider instanceof ListenerProviderInterface) {
+                throw new AppException(_('Failed assert the ListenerProvider'));
             }
 
             if (!$this->config instanceof ConfigInterface) {
-                throw new AppException(_('Failed assert the config'));
+                throw new AppException(_('Failed assert the Config'));
             }
+          
         } catch (AppException $e) {
             if (true === self::getConfig('app.debug.enabled')) {
-
+                
             }
         }
     }

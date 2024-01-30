@@ -45,6 +45,15 @@ interface TimerInterface
     public function getStop(string $timer): float;
 
     /**
+     * Get a duration
+     *
+     * @param string $timer
+     * 
+     * @return void
+     */
+    public function getDuration(string $timer): float;
+
+    /**
      * Indicates if timer exists
      *
      * @param string  $timer
@@ -53,4 +62,12 @@ interface TimerInterface
      * @return boolean
      */
     public function has(string $timer, bool $createIfNotExists = false): bool;
+
+    /**
+     * {@inheritDoc}
+     */
+    public function reset(?string $id = null): void;
+
+    public function dump();
+
 }

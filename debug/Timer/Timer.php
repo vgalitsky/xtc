@@ -7,7 +7,7 @@ class Timer implements TimerInterface
     /**
      * @var array The timers container
      */
-    private array $timers = [];
+    protected array $timers = [];
 
     /**
      * Start a timer
@@ -34,7 +34,10 @@ class Timer implements TimerInterface
         if (!$this->has($timer)) {
             return 0;
         }
-        return $this->timers[$timer]['stop'] = microtime(true);
+        $this->timers[$timer]['stop'] = microtime(true);
+        $this->timers[$timer]['duration'] = $this->timers[$timer]['stop'] - $this->timers[$timer]['start'];
+
+        return $this->timers[$timer]['duration'];
     }
 
     /**
@@ -50,6 +53,7 @@ class Timer implements TimerInterface
             return [
                 'start' => $this->getStart($timer),
                 'stop' => $this->getStop($timer),
+                'duration' => $this->getDuration($timer),
             ];
         }
     }
@@ -85,6 +89,21 @@ class Timer implements TimerInterface
     }
 
     /**
+     * Get a duration
+     *
+     * @param string $timer
+     * 
+     * @return void
+     */
+    public function getDuration(string $timer): float
+    {
+        if ($this->has($timer) ) {
+            return $this->timers[$timer]['duration'];
+        }
+        return 0;
+    }
+
+    /**
      * Indicates if timer exists
      *
      * @param string  $timer
@@ -102,4 +121,19 @@ class Timer implements TimerInterface
         }
         return true;
     }
+
+    public function reset(?string $id = null): void
+    {
+        if( null === $id ) {
+            $this->timers = [];
+        } else {
+            $this->timers[$id] = [];
+        }
+    }
+
+    public function dump(): string
+    {
+        return serialize($this->timers);
+    }
+
 }
