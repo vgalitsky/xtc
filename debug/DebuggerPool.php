@@ -1,8 +1,8 @@
 <?php
 namespace XTC\Debug;
 
-use Psr\Container\ContainerInterface as PsrContainerInterface;
-use XTC\Container\ContainerInterface;
+
+use XTC\Container\FactoryInterface;
 
 class DebuggerPool implements  DebuggerPoolInterface
 {
@@ -13,11 +13,9 @@ class DebuggerPool implements  DebuggerPoolInterface
     protected ?array $debuggers = [];
 
     /**
-     * @var ContainerInterface|null
+     * @var FactoryInterface
      */
-    protected ?ContainerInterface $container = null;
-
-    protected $debuggerFactory = null;
+    protected $factory = null;
 
     /**
      * {@inheritDoc}
@@ -26,9 +24,9 @@ class DebuggerPool implements  DebuggerPoolInterface
     // {
     //     $this->container = $container;
     // }
-    public function __construct(FactoryInterface $debuggerFactory) 
+    public function __construct(FactoryInterface $factory) 
     {
-        $this->debuggerFactory = $debuggerFactory;
+        $this->factory = $factory;
     }
 
     /**
@@ -36,7 +34,7 @@ class DebuggerPool implements  DebuggerPoolInterface
      */
     public function create(string $id): DebuggerInterface
     {
-        $this->debuggers[$id] = $this->container->create(DebuggerInterface::class, $id);
+        $this->debuggers[$id] = $this->factory->create(DebuggerInterface::class, $id);
 
         return $this->debuggers[$id];
     }

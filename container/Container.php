@@ -142,11 +142,20 @@ class Container implements ContainerInterface
             }
         }
 
+        /**
+         * Resolver service agruments
+         */
         $arguments = $this->resolveArguments($parameters);
-        $args = $arguments + $args;
+        
+        /**
+         * Add arguments passed via create method call 
+         * Meaning these arguments came outside the container
+         * And no need to be resolved
+         */
+        array_push($arguments, ...$args);
 
         /** @var object $service */
-        $service = $this->createServiceInstance($preference, ...$args);
+        $service = $this->createServiceInstance($preference, ...$arguments);
 
         return $service;
     }
@@ -217,6 +226,13 @@ class Container implements ContainerInterface
      */
     protected function resolvePreference(string $id): string
     {
+        /**
+         * @var string $preference
+         */
+        $preferenceId = $this->config->get('preference.' . $id . '.id');
+        if (null !== $preferenceId) {
+            return $this->resolvePreference($preferenceId);
+        }
         
         /**
          * @var string $preference
@@ -270,18 +286,18 @@ class Container implements ContainerInterface
      * @param string $class 
      * @param mixed  ...$args 
      * 
-     * @return void
-     * @throws UnableToCreateServiceException
+     * @return object
+     * @throws InvalidArgumentException
      */
     protected function createServiceInstance(string $class, ...$args): object
     {
-
-        //@TODO:VG resolve
         try {
             //$factory = Factory::factory($class);
+            
             return new $class(...$args);
+
         } catch (\Throwable $e) {
-            throw new UnableToCreateServiceException(sprintf(_('Unable to create service "%s": %s'), $class, $e->getMessage()), $e->getCode(), $e);
+            throw new InvalidArgumentException(sprintf(_('Unable to create service "%s": %s'), $class, $e->getMessage()), $e->getCode(), $e);
         }
     }
     

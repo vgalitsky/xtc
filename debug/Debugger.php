@@ -5,7 +5,7 @@ namespace XTC\Debug;
 use Psr\Log\LoggerInterface;
 
 use XTC\App\Bootstrap;
-use XTC\Container\ContainerInterface;
+use XTC\Container\FactoryInterface;
 use XTC\Debug\Counter\CounterInterface;
 use XTC\Debug\Message\MessageStackInterface;
 use XTC\Debug\Timer\TimerInterface;
@@ -18,9 +18,9 @@ class Debugger implements DebuggerInterface
     protected ?string $id = '';
 
     /**
-     * @var ContainerInterface|null
+     * @var FactoryInterface|null
      */
-    protected ?ContainerInterface $container = null;
+    protected ?FactoryInterface $factory = null;
 
     /**
      * @var LoggerInterface|null
@@ -45,17 +45,20 @@ class Debugger implements DebuggerInterface
     /**
      * The constructor
      *
-     * @param ContainerInterface $container
+     * @param FactoryInterface $factory
      */
     public function __construct(
-        ContainerInterface $container, 
+        MessageStackInterface $messages, 
+        CounterInterface $counter,
+        TimerInterface $timer,
+        FactoryInterface $loggerFactory,
         string $id
     ) {
-        $this->container = $container;
-        $this->messages = $this->container->create(MessageStackInterface::class);
-        $this->counter = $this->container->create(CounterInterface::class);
-        $this->timer = $this->container->create(TimerInterface::class);
-        $this->logger = $this->container->create(
+        //$this->factory = $factory;
+        $this->messages = $messages;
+        $this->counter = $counter;
+        $this->timer = $timer;
+        $this->logger = $loggerFactory->create(
             LoggerInterface::class,
             Bootstrap::getBasePath() . '/log/' . 'debugger-' . $id . '.log'
         );

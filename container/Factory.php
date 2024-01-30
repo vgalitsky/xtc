@@ -8,31 +8,37 @@ class Factory implements FactoryInterface
 {
 
     protected ?XTCContainerInterface $container = null;
-    protected string $serviceId = '';
-    protected array $args = [];
-    public function __construct(ContainerInterface $container, string $serviceId, ...$args)
+
+    public function __construct(ContainerInterface $container)
     {
         $this->container = $container;
-        $this->serviceId = $serviceId;
-        $this->args = $args;
     }
 
-    function create(...$args)
+    /**
+     * Create the instance
+     *
+     * @param string $serviceId The service Id
+     * @param mixed  ...$args   The service arguments
+     * 
+     * @return object
+     */
+    function create(string $serviceId, ...$args): object
     {
-        return $this->container->create($this->serviceId, ...$this->args);
+        return $this->container->create($serviceId, ...$args);
     }
 
-    // static public function containerFactory(string $id_or_class, ...$args)
-    // {
-    //     return function (ContainerInterface $container) use ($id_or_class, $args) {
-    //         return $container->create($id_or_class, ...$args);
-    //     };
-    // }
-
-    // static public function factory(string $class, ...$args)
-    // {
-    //     return function () use ($class, $args) {
-    //         return new ($class)(...$args);
-    //     };
-    // }
+    /**
+     * Lazy
+     *
+     * @param string $serviceId
+     * @param mixed ...$args
+     * 
+     * @return callable
+     */
+    function lazy(string $serviceId, ...$args)
+    {
+        return function() use ($serviceId, $args) {
+            return $this->create($serviceId, ...$args);
+        };
+    }
 }

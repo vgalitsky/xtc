@@ -4,5 +4,5 @@ namespace XTC\Container;
 interface FactoryInterface
 {
     
-    function create(...$args);
+    function create(string $serviceId, ...$args);
 }

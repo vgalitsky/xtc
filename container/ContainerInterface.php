@@ -13,10 +13,10 @@ interface ContainerInterface extends PsrContainerInterface
     /**
      * {@inheritDoc}
      *
-     * @param string $id
-     * @param bool   $create           Whether to create
-     * @param bool   $registerCreated  Whether to register
-     * @param mixed ...$args           Service constructor arguments
+     * @param string $id              The id of the service
+     * @param bool   $create          Whether to create
+     * @param bool   $registerCreated Whether to register
+     * @param mixed  ...$args         Service constructor arguments
      * 
      * @return object The service instance
      */
@@ -30,6 +30,7 @@ interface ContainerInterface extends PsrContainerInterface
      * @param object $service The service instance
      * 
      * @return void
+     * 
      * @throws ServiceAlreadyRegisteredException
      */
     function register(string $id, object $service);
@@ -40,7 +41,8 @@ interface ContainerInterface extends PsrContainerInterface
      * @param string $id_or_class The service identifier or classname
      * @param mixed  ...$args     The service constructor arguments
      * 
-     * @return void
+     * @return object The created service instance
+     * 
      * @throws UnableToCreateServiceException
      * @throws ServiceAlreadyRegisteredException
 
